@@ -195,7 +195,7 @@ export const RuntimeWidget = defineWidget({
   label: "Runtime",
   category: "Project",
   description: "Current project runtime (e.g. Bun, Python, Go, Rust)",
-  dependencies: ["cwd"],
+  dependencies: ["cwd", "projectTrusted"],
   baseOptions: ["raw", "hideWhenEmpty", "icon", "text"],
   baseOptionDefaults: { hideWhenEmpty: true },
   properties: [
@@ -233,7 +233,7 @@ export const RuntimeWidget = defineWidget({
   defaultStyle: { fg: "default", bg: "default", bold: false },
   render({ ctx, options, renderWidget }) {
     const cwd = ctx.cwd;
-    if (cwd.length === 0) return renderWidget("");
+    if (cwd.length === 0 || ctx.projectTrusted !== true) return renderWidget("");
 
     const info = asyncCache.get(
       CACHE_NAMESPACES.runtime,
@@ -290,7 +290,7 @@ async function detectRuntime({
   for (const definition of RUNTIME_DEFINITIONS) {
     if (!matchesRuntime(definition, entries)) continue;
 
-    const version = displayVersion ? await detectVersion(definition) : undefined;
+    const version = displayVersion ? await detectVersion(definition, cwd) : undefined;
     return version
       ? {
           name: definition.name,
@@ -329,20 +329,20 @@ function hasAnyFile(entries: readonly CwdEntry[], files: readonly string[]) {
   return files.some((file) => fileNames.has(file));
 }
 
-async function detectVersion(definition: RuntimeDefinition) {
+async function detectVersion(definition: RuntimeDefinition, cwd: string) {
   for (const command of definition.versionCommands) {
-    const version = await runVersion(command);
+    const version = await runVersion(command, cwd);
     if (version) return version;
   }
   return undefined;
 }
 
-async function runVersion(versionCommand: VersionCommand) {
+async function runVersion(versionCommand: VersionCommand, cwd: string) {
   return new Promise<string | undefined>((resolve) => {
     execFile(
       versionCommand.command,
       [...versionCommand.args],
-      { encoding: "utf8", timeout: VERSION_TIMEOUT_MS, windowsHide: true },
+      { cwd, encoding: "utf8", timeout: VERSION_TIMEOUT_MS, windowsHide: true },
       (error, stdout, stderr) => {
         const output = `${stringOutput(stdout)}\n${stringOutput(stderr)}`;
         if (error && output.trim().length === 0) {

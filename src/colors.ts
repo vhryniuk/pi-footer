@@ -1,6 +1,8 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
 import { Chalk } from "chalk";
 
+import { sanitizeTerminalText } from "./security.js";
+
 const chalk = {
   level: 2,
   c: new Chalk({ level: 2 }),
@@ -166,10 +168,11 @@ export function applyColors(
   level: ColorLevel,
   theme?: Theme,
 ): string {
-  if (level === "none") return text;
+  const safeText = sanitizeTerminalText(text);
+  if (level === "none") return safeText;
   useColorLevel(level);
 
-  let output = text;
+  let output = safeText;
   if (foreground && foreground !== "default")
     output = applyOne(output, foreground, false, level, theme);
   if (background && background !== "default") output = applyOne(output, background, true, level);

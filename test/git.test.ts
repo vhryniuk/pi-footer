@@ -7,13 +7,16 @@ import { EMPTY_GIT_INFO, getGitInfo, loadGitInfo } from "../src/git.js";
 type ExecResult = { stdout: string; stderr: string; code: number; killed: boolean };
 type ExecMock = (command: string, args: string[], options?: unknown) => Promise<ExecResult>;
 
+const GIT_FLAGS = ["--no-pager", "--no-optional-locks", "-c", "core.fsmonitor=false"];
+
 const REPO_OUTPUT: Record<string, string> = {
   "rev-parse --show-toplevel": "/repo",
   "rev-parse --abbrev-ref HEAD": "main",
   "rev-parse --short HEAD": "abc123",
   // Unstaged entry first (leading space in column 1) so a stray stdout.trim() would miscount it.
-  "status --porcelain=v1": " M unstaged.txt\nM  staged.txt\n?? new.txt\n",
-  "diff --shortstat HEAD": "1 file changed, 2 insertions(+), 1 deletion(-)",
+  "status --porcelain=v1 --ignore-submodules=all": " M unstaged.txt\nM  staged.txt\n?? new.txt\n",
+  "diff --no-ext-diff --no-textconv --ignore-submodules=all --shortstat HEAD":
+    "1 file changed, 2 insertions(+), 1 deletion(-)",
   "rev-list --left-right --count @{upstream}...HEAD": "3\t4",
   "remote get-url origin": "git@example.com:repo.git",
 };
@@ -21,7 +24,8 @@ const REPO_OUTPUT: Record<string, string> = {
 // A pi.exec that resolves canned git output, overriding the toplevel path per test.
 function gitExec(rootPath = "/repo") {
   return vi.fn<ExecMock>(async (_command, args) => {
-    const key = args.join(" ");
+    expect(args.slice(0, GIT_FLAGS.length)).toEqual(GIT_FLAGS);
+    const key = args.slice(GIT_FLAGS.length).join(" ");
     const output = key === "rev-parse --show-toplevel" ? rootPath : REPO_OUTPUT[key];
     if (output === undefined) return { stdout: "", stderr: "unexpected", code: 1, killed: false };
     return { stdout: output, stderr: "", code: 0, killed: false };
@@ -67,7 +71,7 @@ describe("loadGitInfo", () => {
     expect(exec).toHaveBeenCalledTimes(6);
     expect(exec).not.toHaveBeenCalledWith(
       "git",
-      ["rev-parse", "--abbrev-ref", "HEAD"],
+      [...GIT_FLAGS, "rev-parse", "--abbrev-ref", "HEAD"],
       expect.anything(),
     );
   });
@@ -80,7 +84,7 @@ describe("loadGitInfo", () => {
     expect(info.branch).toBe("main");
     expect(exec).toHaveBeenCalledWith(
       "git",
-      ["rev-parse", "--abbrev-ref", "HEAD"],
+      [...GIT_FLAGS, "rev-parse", "--abbrev-ref", "HEAD"],
       expect.anything(),
     );
   });

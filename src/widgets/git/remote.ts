@@ -1,3 +1,4 @@
+import { redactRemote } from "../../security.js";
 import { defineWidget } from "../types.js";
 
 export const GitRemoteWidget = defineWidget({
@@ -12,6 +13,6 @@ export const GitRemoteWidget = defineWidget({
   icons: { emoji: "🌐", nerd: "󰊢", text: "remote" },
   defaultStyle: { fg: "cyan", bg: "default", bold: false },
   render({ ctx, renderWidget }) {
-    return renderWidget(ctx.git.remote ?? "");
+    return renderWidget(redactRemote(ctx.git.remote ?? ""));
   },
 });

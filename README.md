@@ -1,5 +1,36 @@
 # pi-footer
 
+## Personal hardened fork
+
+This fork is maintained at [vhryniuk/pi-footer](https://github.com/vhryniuk/pi-footer).
+Install a reviewed commit, not a moving branch:
+
+```bash
+pi install git:github.com/vhryniuk/pi-footer@<full-commit-sha>
+```
+
+Pi keeps that commit pinned during package updates. Upstream changes are not merged
+automatically. Review, test, and push changes here, then explicitly install the new
+commit when you want an update. Pinning also means you must review security fixes
+manually; it does not sandbox this extension or pin Pi itself.
+
+Hardening in this fork:
+
+- Terminal output allows only SGR color/style escapes; clipboard, cursor, terminal
+  query, line-break, and bidirectional-control sequences are removed.
+- Git Remote hides URL userinfo, query strings, fragments, and SCP-style usernames.
+  Tokens embedded in arbitrary repository paths cannot be reliably recognized.
+- Git subprocesses and runtime probing require Pi project trust. Git disables
+  fsmonitor, external diff/textconv, submodule inspection, and optional locks.
+  Trusted Git filters, version-manager shims, and executables on PATH still have
+  your permissions; disable Git widgets/runtime versions if these are untrusted.
+- The runtime dependency (`chalk`) is pinned to 6.0.0 with a committed lockfile.
+  `.npmrc` disables dependency lifecycle scripts; `private: true` prevents
+  accidental npm publishing. GitHub Actions is disabled on the personal fork.
+
+The original upstream documentation follows. Its npm install commands install
+upstream, **not this fork**.
+
 A configurable, Ultimate multi-line footer/statusline extension for [`pi`](https://pi.dev).
 
 ![pi-footer](https://raw.githubusercontent.com/wobondar/pi-footer/main/assets/statusline-custom.png)

@@ -29,6 +29,13 @@ function ctx(overrides: Partial<WidgetContext<["git"]>> = {}) {
 }
 
 describe("GitRemoteWidget", () => {
+  it("redacts credentials even in raw display mode", () => {
+    const remote = "https://alice:secret@example.com/repo.git?token=secret#secret";
+    expect(gitRemote({ raw: true }).render(ctx({ git: { ...git, remote } }))).toBe(
+      "https://example.com/repo.git",
+    );
+  });
+
   it("owns metadata and default options", () => {
     const widget = gitRemote();
     expect(widget).toBeInstanceOf(WidgetInstance);
@@ -50,11 +57,11 @@ describe("GitRemoteWidget", () => {
   });
 
   it("renders labels, custom icons, raw values, fallback text, and missing remotes", () => {
-    expect(gitRemote().render(ctx())).toBe("remote git@github.com:example/pi-footer.git");
+    expect(gitRemote().render(ctx())).toBe("remote github.com:example/pi-footer.git");
     expect(gitRemote({ icon: "remote=" }).render(ctx())).toBe(
-      "remote=git@github.com:example/pi-footer.git",
+      "remote=github.com:example/pi-footer.git",
     );
-    expect(gitRemote({ raw: true }).render(ctx())).toBe("git@github.com:example/pi-footer.git");
+    expect(gitRemote({ raw: true }).render(ctx())).toBe("github.com:example/pi-footer.git");
     expect(gitRemote().render(ctx({ git: { ...git, remote: null } }))).toBe("remote ");
     expect(gitRemote({ text: "no-remote" }).render(ctx({ git: { ...git, remote: null } }))).toBe(
       "remote no-remote",

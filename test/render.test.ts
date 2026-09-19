@@ -77,6 +77,30 @@ const data: StatuslineData = {
 };
 
 describe("renderStatusline", () => {
+  it("filters terminal commands from widget values, icons, and statuses", () => {
+    const attack = "\u001b]52;c;c2VjcmV0\u0007\u001b[2J\n";
+    const lines = renderStatuslines(
+      {
+        ...plainConfig,
+        lines: [
+          [
+            registry.createEntry("cwd", { icon: attack }),
+            registry.createEntry("session-name"),
+            registry.createEntry("external-status", { externalStatusKey: "build" }),
+          ],
+        ],
+      },
+      { ...data, cwd: `/tmp/project${attack}`, sessionName: `session${attack}` },
+      200,
+      { getExtensionStatuses: () => new Map([["build", `ok${attack}`]]) },
+    );
+    expect(lines.join("")).toContain("project");
+    expect(lines.join("")).toContain("session");
+    expect(lines.join("")).toContain("ok");
+    expect(lines.join("")).not.toContain("\u001b");
+    expect(lines.join("")).not.toContain("\n");
+  });
+
   it("renders configured widgets", () => {
     const line = renderStatusline({ ...plainConfig, iconMode: "text" }, data, 200);
     expect(line).toContain("model anthropic/claude-sonnet-4-5");
@@ -156,7 +180,7 @@ describe("renderStatusline", () => {
     );
 
     expect(line).toContain("anthropic/claude-sonnet-4-5");
-    expect(line).toContain("git@github.com:example/pi-footer.git");
+    expect(line).toContain("github.com:example/pi-footer.git");
     expect(line).toContain("hello");
     expect(line).toContain("+10/-4");
     expect(line).toContain("2u/2a/3t");

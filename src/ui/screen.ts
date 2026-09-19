@@ -2,6 +2,7 @@ import { Key, matchesKey } from "@earendil-works/pi-tui";
 
 import { cloneConfig } from "../config.js";
 import type { GetExtensionStatuses } from "../extension-statuses.js";
+import { sanitizeTerminalText } from "../security.js";
 import type { StatuslineConfig, StatuslineData } from "../types.js";
 import { WidgetStore } from "../widgets/store.js";
 import type { Widget } from "../widgets/types.js";
@@ -63,21 +64,23 @@ export class StatuslineConfigScreen {
   }
 
   render(width: number): string[] {
-    return this.overlayRender.render({
-      width,
-      terminalRows: this.getTerminalRows(),
-      activeLineCount: this.getActiveLineCount(),
-      visibleRowCount: this.getVisibleRowCount(),
-      store: this.state.store,
-      previewData: this.previewData,
-      getExtensionStatuses: this.getExtensionStatuses,
-      theme: this.props.getTheme(),
-      requestRender: this.requestRender,
-      configStateText: this.lifecycle.label
-        ? this.theme.configStateLabel(this.lifecycle.state, this.lifecycle.label)
-        : "",
-      body: this.screenController.renderScreen(width),
-    });
+    return this.overlayRender
+      .render({
+        width,
+        terminalRows: this.getTerminalRows(),
+        activeLineCount: this.getActiveLineCount(),
+        visibleRowCount: this.getVisibleRowCount(),
+        store: this.state.store,
+        previewData: this.previewData,
+        getExtensionStatuses: this.getExtensionStatuses,
+        theme: this.props.getTheme(),
+        requestRender: this.requestRender,
+        configStateText: this.lifecycle.label
+          ? this.theme.configStateLabel(this.lifecycle.state, this.lifecycle.label)
+          : "",
+        body: this.screenController.renderScreen(width),
+      })
+      .map(sanitizeTerminalText);
   }
 
   invalidate(): void {}

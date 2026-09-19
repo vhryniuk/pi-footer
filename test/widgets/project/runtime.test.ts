@@ -88,9 +88,12 @@ function runtimeWidget(options: WidgetOptions = {}) {
   return registry.createWidget("runtime", options);
 }
 
-function ctx(overrides: Partial<WidgetContext<["cwd"]>> = {}): WidgetContext<["cwd"]> {
+function ctx(
+  overrides: Partial<WidgetContext<["cwd", "projectTrusted"]>> = {},
+): WidgetContext<["cwd", "projectTrusted"]> {
   return {
     cwd: "/repo",
+    projectTrusted: true,
     iconMode: "text",
     minimalist: false,
     colorLevel: "none",
@@ -156,11 +159,20 @@ afterEach(() => {
 });
 
 describe("RuntimeWidget", () => {
+  it("does not inspect files or run commands without explicit project trust", () => {
+    const widget = runtimeWidget({ displayVersion: true });
+    for (const projectTrusted of [false, undefined]) {
+      expect(widget.render(ctx({ projectTrusted }))).toBeUndefined();
+    }
+    expect(mocks.readdirMock).not.toHaveBeenCalled();
+    expect(mocks.execFileMock).not.toHaveBeenCalled();
+  });
+
   it("owns metadata and default options", () => {
     const widget = runtimeWidget();
     expect(widget).toBeInstanceOf(WidgetInstance);
     expect(registry.spec(widget.type)).toBe(RuntimeWidget);
-    expect(RuntimeWidget.dependencies).toEqual(["cwd"]);
+    expect(RuntimeWidget.dependencies).toEqual(["cwd", "projectTrusted"]);
     expect(RuntimeWidget.icons).toEqual({ emoji: "⚙️", nerd: "", text: "runtime" });
     expect(RuntimeWidget.defaultStyle).toEqual({ fg: "default", bg: "default", bold: false });
     expect(RuntimeWidget.baseOptionDefaults).toEqual({ hideWhenEmpty: true });

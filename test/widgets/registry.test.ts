@@ -9,6 +9,7 @@ import type { WidgetDependency } from "../../src/widgets/types.js";
 
 const VALID_DEPENDENCIES = new Set<WidgetDependency>([
   "cwd",
+  "projectTrusted",
   "model",
   "provider",
   "sessionName",

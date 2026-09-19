@@ -112,6 +112,7 @@ export interface StatuslineData {
   textVerbosity: string | undefined;
   git: GitInfo;
   cwd: string;
+  projectTrusted?: boolean | undefined;
   activeToolCount: number;
   usingSubscription: boolean;
   contextTokens: number | undefined;

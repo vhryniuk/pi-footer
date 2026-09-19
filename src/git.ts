@@ -66,8 +66,15 @@ async function fetchGitInfo({ pi, cwd, branchHint }: GitFetch): Promise<GitInfo 
   const [branch, sha, porcelain, shortstat, aheadBehind, remote] = await Promise.all([
     branchHint ? Promise.resolve(branchHint) : git(pi, cwd, ["rev-parse", "--abbrev-ref", "HEAD"]),
     git(pi, cwd, ["rev-parse", "--short", "HEAD"]),
-    git(pi, cwd, ["status", "--porcelain=v1"]),
-    git(pi, cwd, ["diff", "--shortstat", "HEAD"]),
+    git(pi, cwd, ["status", "--porcelain=v1", "--ignore-submodules=all"]),
+    git(pi, cwd, [
+      "diff",
+      "--no-ext-diff",
+      "--no-textconv",
+      "--ignore-submodules=all",
+      "--shortstat",
+      "HEAD",
+    ]),
     git(pi, cwd, ["rev-list", "--left-right", "--count", "@{upstream}...HEAD"]),
     git(pi, cwd, ["remote", "get-url", "origin"]),
   ]);
@@ -85,7 +92,11 @@ async function fetchGitInfo({ pi, cwd, branchHint }: GitFetch): Promise<GitInfo 
 }
 
 async function git(pi: ExtensionAPI, cwd: string, args: string[]): Promise<string | null> {
-  const { stdout, code, killed } = await pi.exec("git", args, { cwd, timeout: 500 });
+  const { stdout, code, killed } = await pi.exec(
+    "git",
+    ["--no-pager", "--no-optional-locks", "-c", "core.fsmonitor=false", ...args],
+    { cwd, timeout: 500 },
+  );
   // trimEnd, not trim: `status --porcelain=v1` encodes staged vs unstaged in columns 1/2, so the
   // leading space of the first line is significant. trim() would strip it and miscount that file.
   return code !== 0 || killed ? null : stdout.trimEnd() || null;

@@ -22,6 +22,7 @@ import {
 import { EMPTY_GIT_INFO, getGitInfo, hasEnabledGitWidgets, loadGitInfo } from "./git.js";
 import { collectSessionMetrics, collectTurnMetrics } from "./metrics.js";
 import { renderStatuslines } from "./render.js";
+import { sanitizeTerminalText } from "./security.js";
 import { isRecord, type GitInfo, type StatuslineConfig, type StatuslineData } from "./types.js";
 import { openStatuslineConfigUi } from "./ui.js";
 import { WidgetStore } from "./widgets/store.js";
@@ -75,7 +76,7 @@ export default async function statuslineExtension(pi: ExtensionAPI): Promise<voi
             footerData.getExtensionStatuses(),
             config.extensionStatusRow.hiddenKeys,
             STATUS_KEY,
-          ).map((entry) => entry.value);
+          ).map((entry) => sanitizeTerminalText(entry.value));
           const renderedLines = lines.map((line) => truncateToWidth(line, width, "…"));
           if (statuses.length === 0) return renderedLines;
           return [
@@ -135,7 +136,7 @@ export default async function statuslineExtension(pi: ExtensionAPI): Promise<voi
         eventWidgets.values,
         {
           collectGit: true,
-          git: await loadGitInfo(pi, ctx.cwd, "main"),
+          git: ctx.isProjectTrusted() ? await loadGitInfo(pi, ctx.cwd, "main") : EMPTY_GIT_INFO,
           textVerbosity: liveTextVerbosity,
         },
       );
@@ -187,8 +188,10 @@ function collectStatuslineData(
   } = {},
 ): StatuslineData {
   const contextUsage = ctx.getContextUsage();
+  const projectTrusted = ctx.isProjectTrusted();
   const collectGit =
-    options.collectGit ?? (options.config ? hasEnabledGitWidgets(options.config) : true);
+    projectTrusted &&
+    (options.collectGit ?? (options.config ? hasEnabledGitWidgets(options.config) : true));
   return {
     model: ctx.model?.id,
     provider: ctx.model?.provider,
@@ -202,6 +205,7 @@ function collectStatuslineData(
         ? getGitInfo(pi, ctx.cwd, footerData.getGitBranch(), options.requestRender ?? (() => {}))
         : EMPTY_GIT_INFO),
     cwd: ctx.cwd,
+    projectTrusted,
     activeToolCount: pi.getActiveTools().length,
     usingSubscription: ctx.model ? ctx.modelRegistry.isUsingOAuth(ctx.model) : false,
     contextTokens: contextUsage?.tokens ?? undefined,
