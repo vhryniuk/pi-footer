@@ -1,7 +1,7 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
 import { Chalk } from "chalk";
 
-import { sanitizeTerminalText } from "./security.js";
+import { sanitizeTerminalText } from "./security.ts";
 
 const chalk = {
   level: 2,

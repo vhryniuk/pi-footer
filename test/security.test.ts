@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { redactRemote, sanitizeTerminalText } from "../src/security.js";
+import { redactRemote, sanitizeTerminalText } from "../src/security.ts";
 
 describe("sanitizeTerminalText", () => {
   it.each([

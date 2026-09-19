@@ -5,17 +5,17 @@ import type {
 } from "@earendil-works/pi-coding-agent";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { asyncCache } from "../src/cache.js";
-import type * as ConfigModule from "../src/config.js";
-import statuslineExtension from "../src/index.js";
-import type { StatuslineConfig } from "../src/types.js";
-import { taggedPiTheme } from "./helpers/theme.js";
+import { asyncCache } from "../src/cache.ts";
+import type * as ConfigModule from "../src/config.ts";
+import statuslineExtension from "../src/index.ts";
+import type { StatuslineConfig } from "../src/types.ts";
+import { taggedPiTheme } from "./helpers/theme.ts";
 
-vi.mock("../src/config.js", async (importOriginal) => {
+vi.mock("../src/config.ts", async (importOriginal) => {
   const original = await importOriginal<typeof ConfigModule>();
   return { ...original, loadConfig: async () => original.cloneConfig(original.DEFAULT_CONFIG) };
 });
-vi.mock("../src/ui.js", () => ({
+vi.mock("../src/ui.ts", () => ({
   openStatuslineConfigUi: async (_ctx: unknown, config: StatuslineConfig) => ({ config }),
 }));
 

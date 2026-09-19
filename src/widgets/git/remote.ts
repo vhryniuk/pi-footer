@@ -1,5 +1,5 @@
-import { redactRemote } from "../../security.js";
-import { defineWidget } from "../types.js";
+import { redactRemote } from "../../security.ts";
+import { defineWidget } from "../types.ts";
 
 export const GitRemoteWidget = defineWidget({
   type: "git-remote",
